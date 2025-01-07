@@ -1,5 +1,5 @@
 
-name: Pull Request
+name: Pull Request Status
 
 on:
   pull_request_review:
