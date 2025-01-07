@@ -1,14 +1,24 @@
-
 name: Pull Request Status
-
 on:
   pull_request_review:
     types: [submitted]
 
 jobs:
   check_status:
-    if: github.event.review.state == 'approved'
+    if: github.event.review.state != 'approved'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "This PR was approved"
-
+      - name: Count Approved Reviews
+        run: |
+          APPROVED_COUNT=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            --jq 'group_by(.user.login) | map(last) | map(select(.state == "APPROVED")) | length')
+          
+          echo "Number of Approved Reviews: $APPROVED_COUNT"
+          
+          if [ "$APPROVED_COUNT" -ge 2 ]; then
+            echo "PR has $APPROVED_COUNT approved reviews!"
+          else
+            echo "PR has only $APPROVED_COUNT approved reviews. Waiting for more approvals."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
